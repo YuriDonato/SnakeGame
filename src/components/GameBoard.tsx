@@ -15,37 +15,30 @@ const Board = styled.div`
 `;
 
 const GameBoard: React.FC = () => {
-    const [snake, setSnake] = useState([
+    const [snake, setSnake] = useState<number[][]>([
         [4, 10],
         [4, 9],
     ]);
-    const [food, setFood] = useState([10, 10]);
-    const [direction, setDirection] = useState([0, -1]);
-    const [newDirection, setNewDirection] = useState([0, -1]);
+    const [food, setFood] = useState<number[]>([10, 10]);
+    const [direction, setDirection] = useState<number[]>([0, -1]);
     const [speed, setSpeed] = useState(100); // Reduzido para 100ms
-    const [gameOver, setGameOver] = useState(false);
-    const [score, setScore] = useState(0);
-    const [time, setTime] = useState(0);
-    const [isPaused, setIsPaused] = useState(false);
-
-    const [directionQueue, setDirectionQueue] = useState<number[][]>([]);
-
+    const [gameOver, setGameOver] = useState<boolean>(false);
+    const [score, setScore] = useState<number>(0);
+    const [time, setTime] = useState<number>(0);
+    const [isPaused, setIsPaused] = useState<boolean>(false);
+    
+    // Debounce para evitar múltiplas mudanças de direção rápidas
+    const [lastDirectionChange, setLastDirectionChange] = useState<number>(0);
+    const directionChangeDelay = 100; // Tempo em milissegundos entre mudanças de direção
 
     const moveSnake = useCallback(() => {
         if (gameOver || isPaused) return;
-
-        if (directionQueue.length > 0) {
-            setDirection(directionQueue[0]);
-            setDirectionQueue(directionQueue.slice(1));
-        }
 
         const newSnake = [...snake];
         const head = [...newSnake[0]];
         head[0] += direction[0];
         head[1] += direction[1];
         newSnake.unshift(head);
-        newSnake.pop();
-        setSnake(newSnake);
 
         if (head[0] === food[0] && head[1] === food[1]) {
             const newFood = [
@@ -53,8 +46,9 @@ const GameBoard: React.FC = () => {
                 Math.floor(Math.random() * 20),
             ];
             setFood(newFood);
-            newSnake.push([0, 0]);
             setScore(score + 10);
+        } else {
+            newSnake.pop();
         }
 
         if (
@@ -65,12 +59,18 @@ const GameBoard: React.FC = () => {
             snakeCollision(newSnake)
         ) {
             setGameOver(true);
+        } else {
+            setSnake(newSnake);
         }
-    }, [snake, gameOver, isPaused, food, score, direction, directionQueue]);
-
+    }, [snake, gameOver, isPaused, food, score, direction]);
 
     const handleKeyDown = (e: KeyboardEvent) => {
         if (isPaused || gameOver) return;
+
+        const now = Date.now();
+        if (now - lastDirectionChange < directionChangeDelay) {
+            return; // Ignora se a mudança de direção for muito rápida
+        }
 
         let newDir: number[] = [...direction];
 
@@ -91,9 +91,8 @@ const GameBoard: React.FC = () => {
                 return;
         }
 
-        if (directionQueue.length < 2) {
-            setDirectionQueue([...directionQueue, newDir]);
-        }
+        setDirection(newDir);
+        setLastDirectionChange(now); // Atualiza o timestamp da última mudança de direção
     };
 
     const snakeCollision = (snake: number[][]) => {
@@ -114,7 +113,6 @@ const GameBoard: React.FC = () => {
         ]);
         setFood([10, 10]);
         setDirection([0, -1]);
-        setNewDirection([0, -1]);
         setScore(0);
         setTime(0);
         setGameOver(false);
