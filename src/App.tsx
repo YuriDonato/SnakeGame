@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import Menu from "./components/Menu";
 import GameBoard from "./components/GameBoard";
 import GlobalStyles from "./styles/GlobalStyles";
+import SnakeGame from "./SnakeGame/SnakeGame";
 
 const App: React.FC = () => {
     const [isPlaying, setIsPlaying] = useState(false);
@@ -26,7 +27,7 @@ const App: React.FC = () => {
             {!isPlaying && !showCredits && (
                 <Menu onStart={startGame} onCredits={showCreditsScreen} />
             )}
-            {isPlaying && <GameBoard />}
+            {isPlaying && <SnakeGame />}
             {showCredits && <div>Credits Screen</div>}{" "}
             {/* Placeholder for Credits */}
         </>

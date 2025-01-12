@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import styled from "styled-components";
 import Snake from "./Snake";
 import Food from "./Food";
@@ -26,10 +26,10 @@ const GameBoard: React.FC = () => {
     const [score, setScore] = useState<number>(0);
     const [time, setTime] = useState<number>(0);
     const [isPaused, setIsPaused] = useState<boolean>(false);
-    
-    // Debounce para evitar múltiplas mudanças de direção rápidas
-    const [lastDirectionChange, setLastDirectionChange] = useState<number>(0);
-    const directionChangeDelay = 100; // Tempo em milissegundos entre mudanças de direção
+
+    // Ref para armazenar o timestamp da última mudança de direção
+    const lastDirectionChangeRef = useRef<number>(0);
+    const directionChangeDelay = 10; // Tempo em milissegundos entre mudanças de direção
 
     const moveSnake = useCallback(() => {
         if (gameOver || isPaused) return;
@@ -68,7 +68,7 @@ const GameBoard: React.FC = () => {
         if (isPaused || gameOver) return;
 
         const now = Date.now();
-        if (now - lastDirectionChange < directionChangeDelay) {
+        if (now - lastDirectionChangeRef.current < directionChangeDelay) {
             return; // Ignora se a mudança de direção for muito rápida
         }
 
@@ -92,7 +92,7 @@ const GameBoard: React.FC = () => {
         }
 
         setDirection(newDir);
-        setLastDirectionChange(now); // Atualiza o timestamp da última mudança de direção
+        lastDirectionChangeRef.current = now; // Atualiza o timestamp da última mudança de direção
     };
 
     const snakeCollision = (snake: number[][]) => {
@@ -127,7 +127,7 @@ const GameBoard: React.FC = () => {
             clearInterval(gameInterval);
             document.removeEventListener("keydown", handleKeyDown);
         };
-    }, [moveSnake]);
+    }, [moveSnake, speed]);
 
     useEffect(() => {
         let timeInterval: NodeJS.Timeout | null = null;
